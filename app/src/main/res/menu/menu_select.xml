@@ -1,0 +1,26 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.xiaoxin.sleep.ui.MainActivity">
+  <item
+      android:id="@+id/action_search"
+      android:icon="@drawable/ic_search"
+      android:title="搜索"
+      app:showAsAction="ifRoom" />
+  <item
+      android:id="@+id/action_colded"
+      android:orderInCategory="100"
+      android:title="@string/action_colded"
+      app:showAsAction="never"/>
+  <item
+      android:id="@+id/action_cold"
+      android:orderInCategory="100"
+      android:title="@string/action_cold"
+      app:showAsAction="never"/>
+
+  <item
+      android:id="@+id/action_all"
+      android:orderInCategory="100"
+      android:title="@string/action_all"
+      app:showAsAction="never"/>
+</menu>

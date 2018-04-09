@@ -1,0 +1,132 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.jakewharton.butterknife'
+apply plugin: 'AndResGuard'
+apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'org.greenrobot.greendao'
+
+android {
+  def globalConfiguration = rootProject.extensions.getByName("ext")
+  compileSdkVersion globalConfiguration.androidCompileSdkVersion
+  buildToolsVersion globalConfiguration.androidBuildToolsVersion
+  signingConfigs {
+    release {
+      keyAlias 'im_video'
+      keyPassword 'kaisa008'
+      storeFile file('../key/im_video.jks')
+      storePassword 'kaisa008'
+    }
+    debug {
+      keyAlias 'androiddebugkey'
+      keyPassword 'android'
+      storeFile file('../key/debug.keystore')
+      storePassword 'android'
+    }
+    buildTypes {
+      debug {
+        signingConfig signingConfigs.debug
+      }
+      release {
+        signingConfig signingConfigs.release
+      }
+    }
+  }
+
+  defaultConfig {
+    applicationId "com.xiaoxin.sleep"
+    minSdkVersion globalConfiguration.androidMinSdkVersion
+    targetSdkVersion globalConfiguration.androidTargetSdkVersion
+    versionCode 1
+    versionName "1.0"
+
+/*    jackOptions {
+      enabled=true
+    }*/
+    vectorDrawables.useSupportLibrary = true
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled true
+      shrinkResources true
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+  }
+  //greendao配置
+  greendao {
+    //版本号，升级时可配置
+    schemaVersion 1
+    daoPackage 'com.xiaoxin.sleep.greendao'//设置DaoMaster、DaoSession、Dao包名
+    targetGenDir 'src/main/java'//设置DaoMaster、DaoSession、Dao目录
+  }
+}
+andResGuard {
+  // mappingFile = file("./resource_mapping.txt")
+  mappingFile = null
+  // 当你使用v2签名的时候，7zip压缩是无法生效的。
+  use7zip = true
+  useSign = true
+  // 打开这个开关，会keep住所有资源的原始路径，只混淆资源的名字
+  keepRoot = false
+  whiteList = [// for your icon
+               "R.drawable.icon",
+               // for fabric
+               "R.string.com.crashlytics.*",
+               // for umeng update
+               "R.string.umeng*",
+               "R.string.UM*",
+               "R.string.tb_*",
+               "R.layout.umeng*",
+               "R.layout.tb_*",
+               "R.drawable.umeng*",
+               "R.drawable.tb_*",
+               "R.anim.umeng*",
+               "R.color.umeng*",
+               "R.color.tb_*",
+               "R.style.*UM*",
+               "R.style.umeng*",
+               "R.id.umeng*",
+               // umeng share for sina
+               "R.drawable.sina*",
+               // for google-services.json
+               "R.string.google_app_id",
+               "R.string.gcm_defaultSenderId",
+               "R.string.default_web_client_id",
+               "R.string.ga_trackingId",
+               "R.string.firebase_database_url",
+               "R.string.google_api_key",
+               "R.string.google_crash_reporting_api_key",
+               // umeng share for facebook
+               "R.layout.*facebook*",
+               "R.id.*facebook*",
+               // umeng share for messager
+               "R.layout.*messager*",
+               "R.id.*messager*",
+               // umeng share commond
+               "R.id.progress_bar_parent",
+               "R.id.webView"]
+  compressFilePattern = ["*.png",
+                         "*.jpg",
+                         "*.jpeg",
+                         "*.gif",
+                         "resources.arsc"]
+  sevenzip {
+    artifact = 'com.tencent.mm:SevenZip:1.2.3'
+    //path = "/usr/local/bin/7za"
+  }
+}
+
+dependencies {
+  compile fileTree(include: ['*.jar'], dir: 'libs')
+  compile project(':Library')
+  compile 'com.android.support.constraint:constraint-layout:1.0.2'
+  annotationProcessor 'com.jakewharton:butterknife-compiler:8.6.0'
+  compile 'com.github.lygttpod:SuperTextView:2.0.8'
+  compile project(':MaterialSearchView')
+  compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
+  compile 'com.tencent.bugly:crashreport:2.6.5'
+  compile 'org.greenrobot:greendao:3.2.0'
+}

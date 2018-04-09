@@ -1,0 +1,17 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.xiaoxin.sleep.ui.MainActivity">
+  <item
+      android:id="@+id/action_search"
+      android:icon="@drawable/ic_search"
+      android:title="@string/abc_search_hint"
+      app:showAsAction="ifRoom" />
+  <item
+      android:id="@+id/action_setting"
+      android:icon="@drawable/ic_setting"
+      android:title="搜索"
+      app:showAsAction="ifRoom" />
+
+
+</menu>
