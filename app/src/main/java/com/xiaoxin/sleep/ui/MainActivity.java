@@ -4,6 +4,7 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -117,19 +118,11 @@ public class MainActivity extends BaseActivity
 
   private void sleepApp() {
     showloadDialog("正在冷冻中");
-    Observable.create(new ObservableOnSubscribe<RxModelWithSy>() {
-      @Override
-      public void subscribe(ObservableEmitter<RxModelWithSy> subscriber) throws Exception {
-        //找出已经解冻的app进行冻结
-        List<AppInfo> mData = mSleepHeaderView.getAdapter().getData();
-        List<AppInfo> mOtherAdapterData = mOtherAdapter.getData();
-        int mWarnApp = AppDao.getInstance().findWarnApp(mData,mOtherAdapterData);
-        RxModelWithSy rxModelWithSy = new RxModelWithSy(mWarnApp, 0, mData, mOtherAdapterData);
-        subscriber.onNext(rxModelWithSy);
-        subscriber.onComplete();
-      }
-    }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
-            .observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<RxModelWithSy>() {
+    AppDao.getInstance().doSleepApp(mSleepHeaderView.getAdapter().getData(),mOtherAdapter.getData(), doSleepAfter());
+  }
+
+  @NonNull private Consumer<RxModelWithSy> doSleepAfter() {
+    return new Consumer<RxModelWithSy>() {
       @Override
       public void accept(RxModelWithSy rxModelWithSy) throws Exception {
         notifyDataSetChanged();
@@ -140,9 +133,7 @@ public class MainActivity extends BaseActivity
         ToastUtils.showShortToast("睡眠" + num + "个");
 
       }
-    });
-
-
+    };
   }
 
   private void saveUserDis(List<AppInfo> mData, List<AppInfo> mOtherAdapterData) {
@@ -164,25 +155,8 @@ public class MainActivity extends BaseActivity
       @Override public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         mSearchView.closeSearch();
         showloadDialog("加载中");
-
-        final List<AppInfo> mListData = getListData();
         final TextView mTextView = (TextView) view.findViewById(R.id.suggestion_text);
-        Observable.create(new ObservableOnSubscribe<AppInfo>() {
-          @Override public void subscribe(ObservableEmitter<AppInfo> subscriber) throws Exception {
-            AppInfo mAppInfo = null;
-            String str = mTextView.getText().toString();
-            for (AppInfo sAppInfo : mListData) {
-              if (str.equals(sAppInfo.appName)) {
-                mAppInfo = sAppInfo;
-                break;
-              }
-            }
-            WarnApp(mAppInfo);
-            subscriber.onNext(mAppInfo);
-            subscriber.onComplete();
-          }
-        }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
-            .observeOn(AndroidSchedulers.mainThread()).subscribe(mAppInfo -> openApp(mAppInfo));
+        AppDao.getInstance().doSearchApp(mTextView.getText().toString(),getListData(),doSearchAfter());
       }
     });
     mSearchView.setEllipsize(true);
@@ -194,12 +168,19 @@ public class MainActivity extends BaseActivity
       }
 
       @Override public boolean onQueryTextChange(String newText) {
-        //Do some magic
         return false;
       }
     });
     initRecylerView();
     setSupportActionBar(mToolbar);
+  }
+
+  @NonNull private Consumer<AppInfo> doSearchAfter() {
+    return new Consumer<AppInfo>() {
+      @Override public void accept(AppInfo mAppInfo) throws Exception {
+        openApp(mAppInfo);
+      }
+    };
   }
 
   private List<AppInfo> getListData() {
@@ -228,24 +209,21 @@ public class MainActivity extends BaseActivity
 
   @Override public void onItemClick(BaseQuickAdapter mBaseQuickAdapter, View mView, int position) {
     //打开app先解冻
-    Observable.create(new ObservableOnSubscribe<AppInfo>() {
-      @Override public void subscribe(ObservableEmitter<AppInfo> subscriber) throws Exception {
-        List<AppInfo> mData = mBaseQuickAdapter.getData();
-        AppInfo mAppInfo = mData.get(position);
-        mAppInfo.open_num++;
-        WarnApp(mAppInfo);
-        subscriber.onNext(mAppInfo);
-        subscriber.onComplete();
-      }
-    }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
-        .observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<AppInfo>() {
+    List<AppInfo> mData = mBaseQuickAdapter.getData();
+    AppInfo mAppInfo = mData.get(position);
+    AppDao.getInstance().doWarnApp(mAppInfo,doWarnAppAfter());
+
+  }
+
+  @NonNull private Consumer<AppInfo> doWarnAppAfter() {
+    return new Consumer<AppInfo>() {
       @Override public void accept(AppInfo mAppInfo) throws Exception {
         notifyDataSetChanged();
         openApp(mAppInfo);
         //缓存
         saveUserDis();
       }
-    });
+    };
   }
 
   @Override public void onBackPressed() {
