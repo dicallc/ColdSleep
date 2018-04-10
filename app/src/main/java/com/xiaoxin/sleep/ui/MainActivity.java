@@ -37,11 +37,8 @@ import com.xiaoxin.sleep.utils.ToastUtils;
 import com.xiaoxin.sleep.view.DialogWithCircularReveal;
 import com.xiaoxin.sleep.view.SleepHeaderView;
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
 import java.util.List;
 import org.greenrobot.eventbus.EventBus;
@@ -275,68 +272,26 @@ public class MainActivity extends BaseActivity
       @Override public void onClick(View v) {
         dialog.dismiss();
         showloadDialog("操作中");
-        Observable.create(new ObservableOnSubscribe<String>() {
-          @Override public void subscribe(ObservableEmitter<String> mObservableEmitter)
-              throws Exception {
-            WarnApp(mAppInfo);
-            mObservableEmitter.onNext("");
-            mObservableEmitter.onComplete();
-          }
-        }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
-            .observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<String>() {
-          @Override public void accept(String mS) throws Exception {
-            goneloadDialog();
-            notifyDataSetChanged();
-          }
-        });
+        AppDao.getInstance().doThawApp(mAppInfo, doThawAfter());
       }
     });
     //移出列表
     fuc_remoove.setOnClickListener(new View.OnClickListener() {
-
       @Override public void onClick(View v) {
         dialog.dismiss();
         showloadDialog("操作中");
-        Observable.create(new ObservableOnSubscribe<AppInfo>() {
-          @Override public void subscribe(ObservableEmitter<AppInfo> mObservableEmitter)
-              throws Exception {
-            WarnApp(mAppInfo);
-            mBaseQuickAdapter.getData().remove(mAppInfo);
-            mObservableEmitter.onNext(mAppInfo);
-            mObservableEmitter.onComplete();
-          }
-        }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
-            .observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<AppInfo>() {
-          @Override public void accept(AppInfo mAppInfo) throws Exception {
-            notifyDataSetChanged();
-            //缓存
-            saveUserDis();
-            goneloadDialog();
-          }
-        });
+        mBaseQuickAdapter.getData().remove(mAppInfo);
+        AppDao.getInstance().doRemoveApp(mAppInfo,doRemoveAppAfter());
+
       }
     });
     uninstall_app.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         dialog.dismiss();
         showloadDialog("删除中");
-        Observable.create(new ObservableOnSubscribe<String>() {
-          @Override public void subscribe(ObservableEmitter<String> mObservableEmitter)
-              throws Exception {
-            ShellUtils.execCommand(LibraryCons.uninstall_app + mAppInfo.packageName, true, true);
-            mBaseQuickAdapter.getData().remove(mAppInfo);
-            mObservableEmitter.onNext("");
-            mObservableEmitter.onComplete();
-          }
-        }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
-            .observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<String>() {
-          @Override public void accept(String mS) throws Exception {
-            notifyDataSetChanged();
-            goneloadDialog();
-            //缓存
-            saveUserDis();
-          }
-        });
+
+        mBaseQuickAdapter.getData().remove(mAppInfo);
+        AppDao.getInstance().doUninstallApp(mAppInfo,doUninstallAppAfter());
       }
     });
     dialog = new DialogWithCircularReveal(MainActivity.this, mInflate);
@@ -345,13 +300,41 @@ public class MainActivity extends BaseActivity
     return true;
   }
 
+  @NonNull private Consumer<String> doUninstallAppAfter() {
+    return new Consumer<String>() {
+      @Override public void accept(String mS) throws Exception {
+        notifyDataSetChanged();
+        goneloadDialog();
+        //缓存
+        saveUserDis();
+      }
+    };
+  }
+
+  @NonNull private Consumer<AppInfo> doRemoveAppAfter() {
+    return new Consumer<AppInfo>() {
+      @Override public void accept(AppInfo mAppInfo) throws Exception {
+        notifyDataSetChanged();
+        //缓存
+        saveUserDis();
+        goneloadDialog();
+      }
+    };
+  }
+
+  @NonNull private Consumer<String> doThawAfter() {
+    return new Consumer<String>() {
+      @Override public void accept(String mS) throws Exception {
+        goneloadDialog();
+        notifyDataSetChanged();
+      }
+    };
+  }
+
   private void notifyDataSetChanged() {
     mSleepHeaderView.getAdapter().notifyDataSetChanged();
     mOtherAdapter.notifyDataSetChanged();
   }
-
-
-
   @Subscribe(threadMode = ThreadMode.MAIN) public void onAppDaoMessage(Event msg) {
     switch (msg.getCurrentDay()) {
       case Event.getDisList:

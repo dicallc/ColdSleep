@@ -333,6 +333,58 @@ public class AppDao {
         .observeOn(AndroidSchedulers.mainThread()).subscribe(mConsumer);
   }
 
+  /**
+   * 只解冻不打开
+   * @param mAppInfo
+   * @param mConsumer
+   */
+  public void doThawApp(AppInfo mAppInfo,Consumer<String> mConsumer){
+    Observable.create(new ObservableOnSubscribe<String>() {
+      @Override public void subscribe(ObservableEmitter<String> mObservableEmitter)
+          throws Exception {
+        WarnAppAction(mAppInfo);
+        mObservableEmitter.onNext("");
+        mObservableEmitter.onComplete();
+      }
+    }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
+        .observeOn(AndroidSchedulers.mainThread()).subscribe(mConsumer);
+  }
+
+  /**
+   * 从列表中移除
+   * @param mAppInfo
+   * @param mConsumer
+   */
+  public void doRemoveApp(AppInfo mAppInfo,Consumer<AppInfo> mConsumer){
+    Observable.create(new ObservableOnSubscribe<AppInfo>() {
+      @Override public void subscribe(ObservableEmitter<AppInfo> mObservableEmitter)
+          throws Exception {
+        WarnAppAction(mAppInfo);
+        mObservableEmitter.onNext(mAppInfo);
+        mObservableEmitter.onComplete();
+      }
+    }).subscribeOn(Schedulers.io()) // 指定 subscribe() 发生在 IO 线程
+        .observeOn(AndroidSchedulers.mainThread()).subscribe();
+  }
+
+  /**
+   * 卸载app
+   * @param mAppInfo
+   * @param mConsumer
+   */
+  public void doUninstallApp(AppInfo mAppInfo,Consumer<String> mConsumer){
+    Observable.create(new ObservableOnSubscribe<String>() {
+      @Override public void subscribe(ObservableEmitter<String> mObservableEmitter)
+          throws Exception {
+        ShellUtils.execCommand(LibraryCons.uninstall_app + mAppInfo.packageName, true, true);
+
+        mObservableEmitter.onNext("");
+        mObservableEmitter.onComplete();
+      }
+    }).subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread()).subscribe(mConsumer);
+  }
+
   public void DoScreenBrSync(Context mContext) {
     new ScreenBrSyncThread(mContext).start();
   }
